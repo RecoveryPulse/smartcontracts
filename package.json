@@ -1,0 +1,27 @@
+{
+  "name": "recoverypulse",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/RecoveryPulse/smartcontracts.git"
+  },
+  "keywords": [
+    "recovery",
+    "contracts"
+  ],
+  "author": "Vijay Krishnavanshi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RecoveryPulse/smartcontracts/issues"
+  },
+  "homepage": "https://github.com/RecoveryPulse/smartcontracts#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "^2.0.0",
+    "hardhat": "^2.20.1"
+  }
+}
