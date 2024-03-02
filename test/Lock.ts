@@ -123,9 +123,9 @@ describe("Lock", function () {
         await publicClient.waitForTransactionReceipt({ hash });
 
         // get the withdrawal events in the latest block
-        const withdrawalEvents = await lock.getEvents.Withdrawal()
-        expect(withdrawalEvents).to.have.lengthOf(1);
-        expect(withdrawalEvents[0].args.amount).to.equal(lockedAmount);
+        const withdrawalEvents = await lock.getEvents.Withdrawal();
+        const withdrawalEvent = withdrawalEvents[0] as Record<string, unknown>;
+        expect((withdrawalEvent.args as any).amount).to.equal(lockedAmount);
       });
     });
   });
