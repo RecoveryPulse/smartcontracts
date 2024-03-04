@@ -1,24 +1,18 @@
 # Inital Draft
 
-Design takes inspiration from how the Ownable2Step.sol Contract works. 
+Recoverable contracts with a cooldown period offer a mechanism for managing ownership transfer and recovery processes within smartcontracts.
 
-We have two key things:
-* Recovery Address 
-* Recovery Algorithm 
+#### Key Components
 
-## Recovery Address
-Address which is the backup address for the contract. In case the recovery is successful this address will get the control of the contract. This can be changed by current owner before / after the process and has cool down period before triggering the recovery once the address is changed. 
+1. **Recovery Condition Contract:**
+    - At the heart of this design lies the concept of a recovery condition contract. This contract defines the criteria or conditions that must be met before ownership transfer is allowed. By encapsulating recovery logic within a separate contract, the system gains flexibility and extensibility.
+    - The recovery condition contract provides an interface that allows developers to implement custom recovery conditions tailored to the specific requirements of their application. This interface defines a method for assessing whether a proposed ownership transfer is permissible based on predefined criteria.
 
-## Recovery Process
-Process to sucessfully recover the contract's access.
+2. **Two-Step Ownership Recovery:**
+    - The ownership recovery process is structured as a two-step mechanism to ensure security and mitigate the risk of unauthorized transfers. 
+    - Initially, the trusted address initiates the transfer by specifying the address of the intended new owner. This action triggers the commencement of the transfer process, marking the new owner as pending.
+    - The finalization of the transfer requires the new owner to accept after the recovery condition is met.
 
-There are two sub components of the Algorithm:
-* Recovery Trigger
-* Recovery Logic
-
-### Recovery Trigger
-Set of condition to kickstart the recovery process.
-
-### Recovery Algorithm
-Set of condition that needs to be fullfilled for the successful recovery process.
-
+3. **Cooldown Period:**
+    - A crucial feature of this contract design is the incorporation of a cooldown period following any modification to the recovery condition contract. This cooldown period serves to regulate the frequency of changes and promote system stability.
+    - After the recovery condition contract is updated, a predefined cooldown period must elapse before another change can be made. This cooldown mechanism helps prevent rapid alterations.
