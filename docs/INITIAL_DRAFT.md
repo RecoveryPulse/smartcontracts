@@ -27,9 +27,13 @@ Recoverable contracts with a cooldown period offer a mechanism for managing owne
 ### Recoverable Contract Modifier
 
 ```javascript
+interface RecoveryCondition {
+    function isRecoverable(address mainContract) external view returns (bool);
+}
+
 type RecoveryContract {
     recoveryStatus: "<current status>" // can be any of these active / successful / cancelled / inactive
-    recoveryConditionContractAddress: "<contract address>" // contract address of the recovery condition contract
+    recoveryConditionContract: "<contract address>" // contract address of the recovery condition contract
     cooldownPeriod: "<N Days>" // time for which recovery will be blocked after the last status change
 
     // modifier function
@@ -52,7 +56,8 @@ type RecoveryContract {
         if (currentStatus !== "active") {
             return currentStatus
         }
-        const recoverable = isRecoverable(selfAddress)
+        const _recoveryCondition = RecoveryCondition(recoveryConditionContract);
+        const recoverable = _recoveryCondition.isRecoverable(selfAddress);
         if (recoverable) {
             return "successful";
         } else {
