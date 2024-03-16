@@ -2,7 +2,9 @@
 
 Recoverable contracts with a cooldown period offer a mechanism for managing ownership transfer and recovery processes within smartcontracts.
 
-#### Key Components
+## Overview
+
+## Key Components
 
 1. **Recovery Condition Contract:**
     - At the heart of this design lies the concept of a recovery condition contract. This contract defines the criteria or conditions that must be met before ownership transfer is allowed. By encapsulating recovery logic within a separate contract, the system gains flexibility and extensibility.
