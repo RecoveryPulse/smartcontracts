@@ -91,3 +91,9 @@ type RecoveryPulse {
     // wip
 }
 ```
+
+```javascript
+type Guardian {
+    // wip
+}
+```
