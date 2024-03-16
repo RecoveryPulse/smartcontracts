@@ -4,6 +4,8 @@ Recoverable contracts with a cooldown period offer a mechanism for managing owne
 
 ## Overview
 
+![Overview](https://github.com/RecoveryPulse/smartcontracts/blob/c2a375e02ab4253890cfb1564be7fd3218dad51d/docs/Overview.png)
+
 ## Key Components
 
 1. **Recovery Condition Contract:**
