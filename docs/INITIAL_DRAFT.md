@@ -28,24 +28,35 @@ Recoverable contracts with a cooldown period offer a mechanism for managing owne
 
 ```javascript
 type RecoveryContract {
-    recoveryStatus: "<current status>" // can be any of these active / successful / declined / inactive
+    recoveryStatus: "<current status>" // can be any of these active / successful / cancelled / inactive
     recoveryConditionContractAddress: "<contract address>" // contract address of the recovery condition contract
     cooldownPeriod: "<N Days>" // time for which recovery will be blocked after the last status change
 
     // modifier function
-    function startRecovery(newOwner: "new address"): "<recovery status>" // function that triggers the contract recovery
+    function startRecovery(newOwner: "new address") { // function that triggers/activated the contract recovery
+        currentStatus = "active";
+        return currentStatus;
+    }
 
     // modifier function
-    function cancelRecovery(): "<recovery status>" // function that overrides the contract recovery
+    function cancelRecovery(): { // function that overrides the contract recovery
+        if (currentStatus !== "active") {
+            return currentStatus
+        }
+        return "cancelled"
+    } 
 
     // modifier function
-    function finaliseRecovery(): return "<recovery status>" { // function that finilises the contract recovery after the recovery condition is met
+    function finaliseRecovery(): { // function that finilises the contract recovery after the recovery condition is met
         ...
+        if (currentStatus !== "active") {
+            return currentStatus
+        }
         const recoverable = isRecoverable(selfAddress)
         if (recoverable) {
-            return "success case";
+            return "successful";
         } else {
-            return "success case";
+            return currentStatus;
         }
         ...
     }
@@ -59,12 +70,19 @@ type RecoveryConditionTemplate {
     function isRecoverable(contractAddress: "<contract address>") {
         ...
         if (conditions satisfied) {
-            return "success case";
+            return true;
         } else {
-            return "error case";
+            return false;
         }
         ...
     }
 }
 ```
 
+**Example Recovery Condition Contract:**
+
+```javascript
+type RecoveryPulse {
+    // wip
+}
+```
