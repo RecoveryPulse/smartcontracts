@@ -20,3 +20,51 @@ Recoverable contracts with a cooldown period offer a mechanism for managing owne
 3. **Cooldown Period:**
     - A crucial feature of this contract design is the incorporation of a cooldown period following any modification to the recovery condition contract. This cooldown period serves to regulate the frequency of changes and promote system stability.
     - After the recovery condition contract is updated, a predefined cooldown period must elapse before another change can be made. This cooldown mechanism helps prevent rapid alterations.
+
+
+## Pseudo Code
+
+### Recoverable Contract Modifier
+
+```javascript
+type RecoveryContract {
+    recoveryStatus: "<current status>" // can be any of these active / successful / declined / inactive
+    recoveryConditionContractAddress: "<contract address>" // contract address of the recovery condition contract
+    cooldownPeriod: "<N Days>" // time for which recovery will be blocked after the last status change
+
+    // modifier function
+    function startRecovery(newOwner: "new address"): "<recovery status>" // function that triggers the contract recovery
+
+    // modifier function
+    function cancelRecovery(): "<recovery status>" // function that overrides the contract recovery
+
+    // modifier function
+    function finaliseRecovery(): return "<recovery status>" { // function that finilises the contract recovery after the recovery condition is met
+        ...
+        const recoverable = isRecoverable(selfAddress)
+        if (recoverable) {
+            return "success case";
+        } else {
+            return "success case";
+        }
+        ...
+    }
+}
+```
+
+### Recovery Condition Template
+
+```javascript
+type RecoveryConditionTemplate {
+    function isRecoverable(contractAddress: "<contract address>") {
+        ...
+        if (conditions satisfied) {
+            return "success case";
+        } else {
+            return "error case";
+        }
+        ...
+    }
+}
+```
+
