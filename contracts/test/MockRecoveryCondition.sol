@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../contracts/interfaces/IRecoveryCondition.sol";
+import "../../contracts/interfaces/IRecoveryCondition.sol";
 
 contract MockRecoveryCondition is IRecoveryCondition {
     bool public shouldReturn;
@@ -10,6 +10,8 @@ contract MockRecoveryCondition is IRecoveryCondition {
         shouldReturn = _shouldReturn;
     }
 
+    // Silence state variable not used warning for contractAddress parameter
+    // solhint-disable-next-line no-unused-vars
     function isRecoverable(address contractAddress) external view override returns (bool) {
         return shouldReturn;
     }
