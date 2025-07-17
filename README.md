@@ -1,10 +1,10 @@
 # Recovery Pulse Smart Contracts
 
-A secure and flexible smart contract recovery system that allows for controlled ownership transfer through configurable recovery conditions.
+A secure and flexible smart contract recovery system that allows for ownership transfer through configurable recovery conditions.
 
 ## Overview
 
-Recovery Pulse provides a robust recovery mechanism for smart contracts, enabling secure ownership transfer when specific conditions are met. The system consists of a main `Recoverable` contract that can be inherited by other contracts, along with modular recovery condition contracts that define when recovery is allowed.
+Recovery Pulse provides a flexible recovery mechanism for smart contracts. It enables secure ownership transfer when specific pre-set conditions are met. The system consists of a main `Recoverable` contract that can be inherited by other contracts, along with modular recovery condition contracts that define when recovery is allowed.
 
 ## Architecture
 
@@ -13,7 +13,7 @@ Recovery Pulse provides a robust recovery mechanism for smart contracts, enablin
 #### `Recoverable.sol`
 The main recovery contract that provides:
 - **Recovery Status Management**: Tracks recovery states (Inactive, Active, Successful, Cancelled)
-- **Cooldown Protection**: Prevents rapid recovery condition changes
+- **Cooldown Protection**: Prevents rapid recovery condition changes (mitigating usual attack vectors)
 - **Ownership Transfer**: Secure transfer of contract ownership
 - **Event Emission**: Comprehensive event logging for transparency
 
@@ -41,18 +41,18 @@ Testing utility for development:
 
 ## Features
 
-### 🔒 Security
+### Security
 - **Cooldown Periods**: Prevents rapid configuration changes
 - **Owner-only Operations**: Critical functions restricted to contract owner
 - **Condition Verification**: Recovery only proceeds when conditions are met
 - **Status Tracking**: Clear recovery state management
 
-### 🔧 Flexibility
+### Flexibility
 - **Modular Conditions**: Pluggable recovery condition contracts
 - **Configurable Cooldowns**: Adjustable time delays
 - **Extensible Interface**: Easy to implement custom recovery conditions
 
-### 📊 Transparency
+### Transparency
 - **Event Logging**: All important actions emit events
 - **Status Visibility**: Public state variables for monitoring
 - **Clear Error Messages**: Descriptive revert reasons
