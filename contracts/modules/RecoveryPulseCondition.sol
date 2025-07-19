@@ -92,7 +92,7 @@ contract RecoveryPulseCondition is IRecoveryCondition {
      * @param contractAddress The address of the contract to check (unused but required by interface)
      * @return bool True if recovery is triggered
      */
-    function isRecoverable(address /*contractAddress*/) external view override returns (bool) {
+    function isRecoverable(address contractAddress) external view override returns (bool) {
         return recoveryTriggered;
     }
 
