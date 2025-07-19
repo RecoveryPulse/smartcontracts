@@ -4,14 +4,15 @@ pragma solidity ^0.8.19;
 import "../interfaces/IRecoveryCondition.sol";
 
 contract RecoveryPulseCondition is IRecoveryCondition {
+    // optional and can be 0x0000000000000000000000000000000000000000 for allowing anyone to trigger recovery
     address public trustedGuardian;
     address public maintainer;
-    uint256 public counter;
     uint256 public lastUpdateTime;
     uint256 public recoveryTimeout;
+    uint256 public pulse;
     bool public recoveryTriggered;
 
-    event CounterUpdated(address indexed by, uint256 newCounter, uint256 timestamp);
+    event PulseUpdated(address indexed by, uint256 newPulse, uint256 timestamp);
     event RecoveryTriggered(address indexed by, address indexed contractAddress, uint256 timeSinceLastUpdate);
     event RecoveryTimeoutUpdated(uint256 newTimeout);
 
@@ -33,19 +34,22 @@ contract RecoveryPulseCondition is IRecoveryCondition {
         trustedGuardian = _guardian;
         maintainer = _maintainer;
         recoveryTimeout = _recoveryTimeout;
-        counter = 0;
+        pulse = 0;
         lastUpdateTime = block.timestamp;
         recoveryTriggered = false;
     }
 
     /**
-     * @dev Updates the counter and resets the last update time
-     * @param _newCounter The new counter value
+     * @dev Updates the pulse and resets the last update time
+     * @param _newPulse The new pulse value
+     * @notice The pulse is a value that is used to determine if the contract is recoverable.
+     * @notice The pulse is updated by the maintainer or a smart account module that updates the pulse based of account activity.
+     * @notice The pulse is used to determine if the contract is recoverable.
      */
-    function updateCounter(uint256 _newCounter) external onlyMaintainer {
-        counter = _newCounter;
+    function updatePulse(uint256 _newPulse) external onlyMaintainer {
+        pulse = _newPulse;
         lastUpdateTime = block.timestamp;
-        emit CounterUpdated(msg.sender, _newCounter, block.timestamp);
+        emit PulseUpdated(msg.sender, _newPulse, block.timestamp);
     }
 
     /**
@@ -74,7 +78,6 @@ contract RecoveryPulseCondition is IRecoveryCondition {
      * @param _newGuardian The new guardian address
      */
     function updateGuardian(address _newGuardian) external onlyMaintainer {
-        require(_newGuardian != address(0), "Guardian cannot be zero address");
         trustedGuardian = _newGuardian;
     }
 
