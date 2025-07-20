@@ -60,7 +60,7 @@ contract Recoverable is IRecoverable, Ownable {
         require(recoveryStatus == RecoveryStatus.Active, "Recovery not active");
         require(msg.sender == pendingOwner, "Only pending owner can finalise");
 
-        bool allowed = recoveryConditionContract.isRecoverable(address(this));
+        bool allowed = recoveryConditionContract.isRecoverable();
         require(allowed, "Recovery condition not met");
 
         _transferOwnership(pendingOwner);

@@ -7,11 +7,13 @@ import "../interfaces/IRecoverable.sol";
 contract SimpleCondition is IRecoveryCondition {
     address public trustedGuardian;
     bool public recoveryTriggered;
+    address public recoverableContract;
 
     event RecoveryTriggered(address indexed by, address indexed contractAddress);
 
-    constructor(address _guardian) {
+    constructor(address _guardian, address _recoverableContract) {
         trustedGuardian = _guardian;
+        recoverableContract = _recoverableContract;
         recoveryTriggered = false;
     }
 
@@ -25,8 +27,12 @@ contract SimpleCondition is IRecoveryCondition {
         recoveryTriggered = false;
     }
 
-    function isRecoverable(address contractAddress) external view override returns (bool) {
+    function isRecoverable() external view override returns (bool) {
         return recoveryTriggered;
+    }
+
+    function canTriggerRecovery() external view override returns (bool) {
+        return !recoveryTriggered;
     }
 
     modifier onlyGuardian() {

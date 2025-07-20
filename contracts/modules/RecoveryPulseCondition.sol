@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "../interfaces/IRecoveryCondition.sol";
+import "../interfaces/IRecoverable.sol";
 
 contract RecoveryPulseCondition is IRecoveryCondition {
     // optional and can be 0x0000000000000000000000000000000000000000 for allowing anyone to trigger recovery
@@ -11,9 +12,10 @@ contract RecoveryPulseCondition is IRecoveryCondition {
     uint256 public recoveryTimeout;
     uint256 public pulse;
     bool public recoveryTriggered;
+    address public recoverableContract;
 
     event PulseUpdated(address indexed by, uint256 newPulse, uint256 timestamp);
-    event RecoveryTriggered(address indexed by, address indexed contractAddress, uint256 timeSinceLastUpdate);
+    event RecoveryTriggered(address indexed by, address indexed contractAddress, address indexed newOwner, uint256 timeSinceLastUpdate);
     event RecoveryTimeoutUpdated(uint256 newTimeout);
 
     modifier onlyGuardian() {
@@ -26,17 +28,30 @@ contract RecoveryPulseCondition is IRecoveryCondition {
         _;
     }
 
+    modifier onlyRecoverableContract() {
+        require(msg.sender == recoverableContract, "Only recoverable contract can call this function");
+        _;
+    }
+
     constructor(
         address _guardian,
         address _maintainer,
+        address _recoverableContract,
         uint256 _recoveryTimeout
     ) {
         trustedGuardian = _guardian;
         maintainer = _maintainer;
+        recoverableContract = _recoverableContract;
         recoveryTimeout = _recoveryTimeout;
         pulse = 0;
         lastUpdateTime = block.timestamp;
         recoveryTriggered = false;
+    }
+
+    function _resetRecovery() internal {
+        recoveryTriggered = false;
+        lastUpdateTime = block.timestamp;
+        pulse = 0;
     }
 
     /**
@@ -49,19 +64,20 @@ contract RecoveryPulseCondition is IRecoveryCondition {
     function updatePulse(uint256 _newPulse) external onlyMaintainer {
         pulse = _newPulse;
         lastUpdateTime = block.timestamp;
+        recoveryTriggered = false;
         emit PulseUpdated(msg.sender, _newPulse, block.timestamp);
     }
 
     /**
      * @dev Allows guardian to trigger recovery if timeout has passed since last update
      * @param contractAddress The address of the contract to recover
+     * @param newOwner The new owner address (unused in this implementation)
      */
-    function triggerRecovery(address contractAddress) external onlyGuardian {
-        require(!recoveryTriggered, "Recovery already triggered");
-        require(isTimeoutExceeded(), "Recovery timeout not exceeded");
-        
+    function triggerRecovery(address contractAddress, address newOwner) external onlyGuardian {
+        require(!recoveryTriggered && isTimeoutExceeded(), "Cannot trigger recovery");
+        IRecoverable(contractAddress).startRecovery(newOwner);
         recoveryTriggered = true;
-        emit RecoveryTriggered(msg.sender, contractAddress, getTimeSinceLastUpdate());
+        emit RecoveryTriggered(msg.sender, contractAddress, newOwner, getTimeSinceLastUpdate());
     }
 
     /**
@@ -70,6 +86,7 @@ contract RecoveryPulseCondition is IRecoveryCondition {
      */
     function updateRecoveryTimeout(uint256 _newTimeout) external onlyMaintainer {
         recoveryTimeout = _newTimeout;
+        _resetRecovery();
         emit RecoveryTimeoutUpdated(_newTimeout);
     }
 
@@ -79,6 +96,7 @@ contract RecoveryPulseCondition is IRecoveryCondition {
      */
     function updateGuardian(address _newGuardian) external onlyMaintainer {
         trustedGuardian = _newGuardian;
+        _resetRecovery();
     }
 
     /**
@@ -88,14 +106,18 @@ contract RecoveryPulseCondition is IRecoveryCondition {
     function updateMaintainer(address _newMaintainer) external onlyMaintainer {
         require(_newMaintainer != address(0), "Maintainer cannot be zero address");
         maintainer = _newMaintainer;
+        _resetRecovery();
     }
 
     /**
      * @dev Checks if recovery is allowed
-     * @param contractAddress The address of the contract to check (unused but required by interface)
-     * @return bool True if recovery is triggered
+     * @return bool True if recovery is allowed
      */
-    function isRecoverable(address contractAddress) external view override returns (bool) {
+    function canTriggerRecovery() external view override returns (bool) {
+        return !recoveryTriggered && isTimeoutExceeded();
+    }
+
+    function isRecoverable() external view override returns (bool) {
         return recoveryTriggered;
     }
 
@@ -129,7 +151,7 @@ contract RecoveryPulseCondition is IRecoveryCondition {
     /**
      * @dev Resets the recovery state (useful for testing or after successful recovery)
      */
-    function resetRecovery() external onlyMaintainer {
-        recoveryTriggered = false;
+    function resetRecovery() external override onlyRecoverableContract {
+        _resetRecovery();
     }
 } 
