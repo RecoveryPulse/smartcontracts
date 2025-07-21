@@ -34,6 +34,14 @@ A basic recovery condition implementation:
 - **Simple State**: Boolean flag determines if recovery is allowed
 - **Event Logging**: Emits events when recovery is triggered
 
+#### `RecoveryPulseCondition.sol`
+A time-based recovery condition with counter mechanism:
+- **Maintainer Updates**: Designated maintainer can update counter and reset timeout
+- **Time-based Recovery**: Guardian can trigger recovery if timeout exceeded since last update
+- **Configurable Timeout**: Adjustable recovery timeout period
+- **Role Management**: Maintainer can update guardian and maintainer addresses
+- **Comprehensive Events**: Detailed event logging for all operations
+
 #### `MockRecoveryCondition.sol`
 Testing utility for development:
 - **Configurable**: Can be set to always return true or false
@@ -70,6 +78,7 @@ Testing utility for development:
 
 ### Deployment
 
+#### Simple Recovery System
 ```bash
 # Set environment variables (optional)
 export COOLDOWN_PERIOD=86400  # 1 day in seconds
@@ -77,6 +86,18 @@ export GUARDIAN_ADDRESS=0x...
 
 # Deploy contracts
 npx hardhat run scripts/deploy.js --network <network>
+```
+
+#### Recovery Pulse Based System
+```bash
+# Set environment variables (optional)
+export COOLDOWN_PERIOD=86400  # 1 day in seconds
+export GUARDIAN_ADDRESS=0x...
+export MAINTAINER_ADDRESS=0x...
+export RECOVERY_TIMEOUT=604800  # 7 days in seconds
+
+# Deploy contracts
+npx hardhat run scripts/deploy-recovery-pulse.js --network <network>
 ```
 
 ### Integration
@@ -98,6 +119,7 @@ contract MyContract is Recoverable {
 
 ### Recovery Process
 
+#### Simple Recovery (SimpleRecoveryCondition)
 1. **Guardian triggers recovery**:
    ```solidity
    recoveryCondition.triggerRecovery(contractAddress);
@@ -109,6 +131,27 @@ contract MyContract is Recoverable {
    ```
 
 3. **Pending owner finalizes**:
+   ```solidity
+   recoverable.finaliseRecovery();
+   ```
+
+#### Recovery Pulse (RecoveryPulseCondition)
+1. **Maintainer updates counter** (prevents recovery):
+   ```solidity
+   recoveryPulseCondition.updateCounter(newCounterValue);
+   ```
+
+2. **Guardian triggers recovery** (if timeout exceeded):
+   ```solidity
+   recoveryPulseCondition.triggerRecovery(contractAddress);
+   ```
+
+3. **Owner starts recovery**:
+   ```solidity
+   recoverable.startRecovery(newOwnerAddress);
+   ```
+
+4. **Pending owner finalizes**:
    ```solidity
    recoverable.finaliseRecovery();
    ```
@@ -127,7 +170,12 @@ npm install
 
 ### Testing
 ```bash
+# Run all tests
 npx hardhat test
+
+# Run specific test files
+npx hardhat test test/Recoverable.js
+npx hardhat test test/RecoveryPulseCondition.js
 ```
 
 ### Compilation

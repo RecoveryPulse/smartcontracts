@@ -3,8 +3,9 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IRecoveryCondition.sol";
+import "./interfaces/IRecoverable.sol";
 
-contract Recoverable is Ownable {
+contract Recoverable is IRecoverable, Ownable {
     enum RecoveryStatus { Inactive, Active, Successful, Cancelled }
 
     address public pendingOwner;
@@ -24,6 +25,11 @@ contract Recoverable is Ownable {
         _;
     }
 
+    modifier onlyRecoveryCondition() {
+        require(msg.sender == address(recoveryConditionContract), "Only recovery condition can call this function");
+        _;
+    }
+
     constructor(address _recoveryCondition, uint256 _cooldownPeriod) Ownable(msg.sender) {
         recoveryConditionContract = IRecoveryCondition(_recoveryCondition);
         cooldownPeriod = _cooldownPeriod;
@@ -37,11 +43,8 @@ contract Recoverable is Ownable {
         emit RecoveryConditionUpdated(_newCondition, cooldownPeriod);
     }
 
-    function startRecovery(address _newOwner) external onlyOwner {
-        require(
-            recoveryStatus == RecoveryStatus.Inactive || recoveryStatus == RecoveryStatus.Cancelled,
-            "Recovery already active"
-        );
+    function startRecovery(address _newOwner) external onlyRecoveryCondition cooldownPassed {
+        require(recoveryStatus == RecoveryStatus.Inactive, "Recovery already active");
         pendingOwner = _newOwner;
         recoveryStatus = RecoveryStatus.Active;
         emit RecoveryStarted(_newOwner);
@@ -57,13 +60,16 @@ contract Recoverable is Ownable {
         require(recoveryStatus == RecoveryStatus.Active, "Recovery not active");
         require(msg.sender == pendingOwner, "Only pending owner can finalise");
 
-        bool allowed = recoveryConditionContract.isRecoverable(address(this));
+        bool allowed = recoveryConditionContract.isRecoverable();
         require(allowed, "Recovery condition not met");
 
         _transferOwnership(pendingOwner);
         pendingOwner = address(0);
         lastRecoveryChange = block.timestamp;
         emit RecoveryFinalised(owner());
+
+        // reset recovery condition and status
+        recoveryConditionContract.resetRecovery();
         recoveryStatus = RecoveryStatus.Inactive;
     }
 }
