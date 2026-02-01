@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "../interfaces/IRecoveryCondition.sol";
+import "../interfaces/IRecoverable.sol";
 
 contract MockRecoveryCondition is IRecoveryCondition {
     bool public shouldReturn;
@@ -19,8 +20,8 @@ contract MockRecoveryCondition is IRecoveryCondition {
     }
 
     function triggerRecovery(address contractAddress, address newOwner) external override {
-        // Mock implementation - does nothing but satisfies the interface
-        // In a real implementation, this might change the state
+        // Actually call startRecovery on the target contract (like real implementations do)
+        IRecoverable(contractAddress).startRecovery(newOwner);
     }
 
     function resetRecovery() external override {

@@ -21,14 +21,16 @@ The main recovery contract that provides:
 Interface for recovery condition contracts:
 ```solidity
 interface IRecoveryCondition {
-    function isRecoverable(address contractAddress) external view returns (bool);
-    function triggerRecovery(address contractAddress) external;
+    function isRecoverable() external view returns (bool);
+    function canTriggerRecovery() external view returns (bool);
+    function triggerRecovery(address contractAddress, address newOwner) external;
+    function resetRecovery() external;
 }
 ```
 
 ### Recovery Condition Modules
 
-#### `SimpleRecoveryCondition.sol`
+#### `SimpleCondition.sol`
 A basic recovery condition implementation:
 - **Guardian-based**: Only a trusted guardian can trigger recovery
 - **Simple State**: Boolean flag determines if recovery is allowed
@@ -67,12 +69,15 @@ Testing utility for development:
 
 ## Recovery Flow
 
-1. **Setup**: Deploy with recovery condition and cooldown period
-2. **Trigger**: Guardian triggers recovery in condition contract
-3. **Initiate**: Owner starts recovery with new owner address
-4. **Verify**: System checks recovery conditions are met
-5. **Finalize**: Pending owner completes the transfer
-6. **Complete**: Ownership transferred, status reset
+1. **Setup**: Deploy recovery condition contract, then Recoverable with condition address and cooldown period
+2. **Trigger & Start**: Guardian calls `triggerRecovery(contractAddress, newOwner)` on condition contract
+   - Condition contract calls `startRecovery(newOwner)` on Recoverable
+   - Status changes from Inactive to Active, pendingOwner is set
+3. **Cancel (optional)**: Owner can cancel active recovery if still accessible
+4. **Finalize**: Pending owner calls `finaliseRecovery()` to complete transfer
+   - System verifies `isRecoverable()` returns true
+   - Ownership transfers, condition contract resets via `resetRecovery()`
+5. **Complete**: Status returns to Inactive, ready for future recovery if needed
 
 ## Usage
 
@@ -119,39 +124,29 @@ contract MyContract is Recoverable {
 
 ### Recovery Process
 
-#### Simple Recovery (SimpleRecoveryCondition)
-1. **Guardian triggers recovery**:
+#### Simple Recovery (SimpleCondition)
+1. **Guardian triggers recovery** (this also starts recovery on Recoverable):
    ```solidity
-   recoveryCondition.triggerRecovery(contractAddress);
+   simpleCondition.triggerRecovery(contractAddress, newOwnerAddress);
    ```
 
-2. **Owner starts recovery**:
-   ```solidity
-   recoverable.startRecovery(newOwnerAddress);
-   ```
-
-3. **Pending owner finalizes**:
+2. **Pending owner finalizes**:
    ```solidity
    recoverable.finaliseRecovery();
    ```
 
 #### Recovery Pulse (RecoveryPulseCondition)
-1. **Maintainer updates counter** (prevents recovery):
+1. **Maintainer sends heartbeat** (prevents recovery):
    ```solidity
-   recoveryPulseCondition.updateCounter(newCounterValue);
+   recoveryPulseCondition.updatePulse(newPulseValue);
    ```
 
-2. **Guardian triggers recovery** (if timeout exceeded):
+2. **Guardian triggers recovery** (if timeout exceeded, this also starts recovery):
    ```solidity
-   recoveryPulseCondition.triggerRecovery(contractAddress);
+   recoveryPulseCondition.triggerRecovery(contractAddress, newOwnerAddress);
    ```
 
-3. **Owner starts recovery**:
-   ```solidity
-   recoverable.startRecovery(newOwnerAddress);
-   ```
-
-4. **Pending owner finalizes**:
+3. **Pending owner finalizes**:
    ```solidity
    recoverable.finaliseRecovery();
    ```
@@ -191,7 +186,7 @@ npx hardhat run scripts/deploy.js --network <network>
 ## Contract Addresses
 
 After deployment, you'll get:
-- **SimpleRecoveryCondition**: Recovery condition contract
+- **SimpleCondition**: Recovery condition contract (or RecoveryPulseCondition for pulse-based)
 - **Recoverable**: Main recovery contract
 
 ## Security Considerations
