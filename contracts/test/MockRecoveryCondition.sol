@@ -6,6 +6,7 @@ import "../interfaces/IRecoverable.sol";
 
 contract MockRecoveryCondition is IRecoveryCondition {
     bool public shouldReturn;
+    address public recoverableContract;
 
     constructor(bool _shouldReturn) {
         shouldReturn = _shouldReturn;
@@ -19,9 +20,10 @@ contract MockRecoveryCondition is IRecoveryCondition {
         return shouldReturn;
     }
 
-    function triggerRecovery(address contractAddress, address newOwner) external override {
+    function triggerRecovery(address newOwner) external override {
         // Actually call startRecovery on the target contract (like real implementations do)
-        IRecoverable(contractAddress).startRecovery(newOwner);
+        require(recoverableContract != address(0), "Recoverable contract not set");
+        IRecoverable(recoverableContract).startRecovery(newOwner);
     }
 
     function resetRecovery() external override {
@@ -30,5 +32,9 @@ contract MockRecoveryCondition is IRecoveryCondition {
 
     function setShouldReturn(bool _shouldReturn) external {
         shouldReturn = _shouldReturn;
+    }
+
+    function setRecoverableContract(address _recoverableContract) external {
+        recoverableContract = _recoverableContract;
     }
 } 

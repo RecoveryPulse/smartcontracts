@@ -70,14 +70,13 @@ contract RecoveryPulseCondition is IRecoveryCondition {
 
     /**
      * @dev Allows guardian to trigger recovery if timeout has passed since last update
-     * @param contractAddress The address of the contract to recover
-     * @param newOwner The new owner address (unused in this implementation)
+     * @param newOwner The new owner address
      */
-    function triggerRecovery(address contractAddress, address newOwner) external onlyGuardian {
+    function triggerRecovery(address newOwner) external override onlyGuardian {
         require(!recoveryTriggered && isTimeoutExceeded(), "Cannot trigger recovery");
-        IRecoverable(contractAddress).startRecovery(newOwner);
+        IRecoverable(recoverableContract).startRecovery(newOwner);
         recoveryTriggered = true;
-        emit RecoveryTriggered(msg.sender, contractAddress, newOwner, getTimeSinceLastUpdate());
+        emit RecoveryTriggered(msg.sender, recoverableContract, newOwner, getTimeSinceLastUpdate());
     }
 
     /**

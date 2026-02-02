@@ -21,11 +21,11 @@ contract SimpleCondition is IRecoveryCondition {
         recoveryTriggered = false;
     }
 
-    function triggerRecovery(address contractAddress, address newOwner) external onlyGuardian {
+    function triggerRecovery(address newOwner) external onlyGuardian {
         require(!recoveryTriggered, "Recovery already triggered");
-        IRecoverable(contractAddress).startRecovery(newOwner);
+        IRecoverable(recoverableContract).startRecovery(newOwner);
         recoveryTriggered = true;
-        emit RecoveryTriggered(contractAddress, newOwner, msg.sender);
+        emit RecoveryTriggered(recoverableContract, newOwner, msg.sender);
     }
 
     function resetRecovery() external override onlyRecoverableContract {

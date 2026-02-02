@@ -23,7 +23,7 @@ Interface for recovery condition contracts:
 interface IRecoveryCondition {
     function isRecoverable() external view returns (bool);
     function canTriggerRecovery() external view returns (bool);
-    function triggerRecovery(address contractAddress, address newOwner) external;
+    function triggerRecovery(address newOwner) external;
     function resetRecovery() external;
 }
 ```
@@ -69,9 +69,9 @@ Testing utility for development:
 
 ## Recovery Flow
 
-1. **Setup**: Deploy recovery condition contract, then Recoverable with condition address and cooldown period
-2. **Trigger & Start**: Guardian calls `triggerRecovery(contractAddress, newOwner)` on condition contract
-   - Condition contract calls `startRecovery(newOwner)` on Recoverable
+1. **Setup**: Deploy recovery condition contract with Recoverable address, then Recoverable with condition address and cooldown period
+2. **Trigger & Start**: Guardian calls `triggerRecovery(newOwner)` on condition contract
+   - Condition contract calls `startRecovery(newOwner)` on the stored Recoverable address
    - Status changes from Inactive to Active, pendingOwner is set
 3. **Cancel (optional)**: Owner can cancel active recovery if still accessible
 4. **Finalize**: Pending owner calls `finaliseRecovery()` to complete transfer
@@ -127,7 +127,7 @@ contract MyContract is Recoverable {
 #### Simple Recovery (SimpleCondition)
 1. **Guardian triggers recovery** (this also starts recovery on Recoverable):
    ```solidity
-   simpleCondition.triggerRecovery(contractAddress, newOwnerAddress);
+   simpleCondition.triggerRecovery(newOwnerAddress);
    ```
 
 2. **Pending owner finalizes**:
@@ -143,7 +143,7 @@ contract MyContract is Recoverable {
 
 2. **Guardian triggers recovery** (if timeout exceeded, this also starts recovery):
    ```solidity
-   recoveryPulseCondition.triggerRecovery(contractAddress, newOwnerAddress);
+   recoveryPulseCondition.triggerRecovery(newOwnerAddress);
    ```
 
 3. **Pending owner finalizes**:

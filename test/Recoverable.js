@@ -63,7 +63,7 @@ describe("Recoverable", function () {
         await time.increase(cooldownPeriod + 1);
 
         // Guardian triggers recovery via condition contract
-        await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address))
+        await expect(recoveryCondition.connect(guardian).triggerRecovery(newOwner.address))
           .to.emit(recoverable, "RecoveryStarted")
           .withArgs(newOwner.address);
 
@@ -78,7 +78,7 @@ describe("Recoverable", function () {
         await time.increase(cooldownPeriod + 1);
 
         // Start and cancel a recovery first
-        await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+        await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
         await recoverable.connect(owner).cancelRecovery();
 
         // Reset the condition contract and wait for cooldown again
@@ -87,7 +87,7 @@ describe("Recoverable", function () {
 
         // Start a new recovery
         const anotherNewOwner = ethers.Wallet.createRandom();
-        await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, anotherNewOwner.address))
+        await expect(recoveryCondition.connect(guardian).triggerRecovery(anotherNewOwner.address))
           .to.emit(recoverable, "RecoveryStarted")
           .withArgs(anotherNewOwner.address);
 
@@ -101,9 +101,9 @@ describe("Recoverable", function () {
         // Wait for cooldown to pass
         await time.increase(cooldownPeriod + 1);
 
-        await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+        await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
 
-        await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address))
+        await expect(recoveryCondition.connect(guardian).triggerRecovery(newOwner.address))
           .to.be.revertedWith("Recovery already triggered");
       });
 
@@ -122,7 +122,7 @@ describe("Recoverable", function () {
         // Wait for cooldown to pass
         await time.increase(cooldownPeriod + 1);
 
-        await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+        await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
 
         await expect(recoverable.connect(owner).cancelRecovery())
           .to.emit(recoverable, "RecoveryCancelled");
@@ -143,7 +143,7 @@ describe("Recoverable", function () {
         // Wait for cooldown to pass
         await time.increase(cooldownPeriod + 1);
 
-        await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+        await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
 
         await expect(recoverable.connect(otherAccount).cancelRecovery())
           .to.be.revertedWithCustomError(recoverable, "OwnableUnauthorizedAccount");
@@ -158,7 +158,7 @@ describe("Recoverable", function () {
         await time.increase(cooldownPeriod + 1);
 
         // Guardian triggers recovery (which also starts it)
-        await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+        await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
 
         await expect(recoverable.connect(newOwner).finaliseRecovery())
           .to.emit(recoverable, "RecoveryFinalised")
@@ -183,7 +183,7 @@ describe("Recoverable", function () {
         await time.increase(cooldownPeriod + 1);
 
         // Guardian triggers recovery
-        await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+        await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
 
         await expect(recoverable.connect(otherAccount).finaliseRecovery())
           .to.be.revertedWith("Only pending owner can finalise");
@@ -202,11 +202,14 @@ describe("Recoverable", function () {
         // Update the recovery condition
         await recoverable.connect(owner).updateRecoveryCondition(mockCondition.target);
 
+        // Set the recoverable contract in mock
+        await mockCondition.setRecoverableContract(recoverable.target);
+
         // Wait for cooldown again after updating condition
         await time.increase(cooldownPeriod + 1);
 
         // Use mock to trigger recovery (mock allows anyone to call)
-        await mockCondition.triggerRecovery(recoverable.target, newOwner.address);
+        await mockCondition.triggerRecovery(newOwner.address);
 
         await expect(recoverable.connect(newOwner).finaliseRecovery())
           .to.be.revertedWith("Recovery condition not met");
@@ -225,11 +228,14 @@ describe("Recoverable", function () {
         // Update the recovery condition to mock
         await recoverable.connect(owner).updateRecoveryCondition(mockCondition.target);
 
+        // Set the recoverable contract in mock
+        await mockCondition.setRecoverableContract(recoverable.target);
+
         // Wait for cooldown again
         await time.increase(cooldownPeriod + 1);
 
         // Mock triggers recovery (starts it)
-        await mockCondition.triggerRecovery(recoverable.target, newOwner.address);
+        await mockCondition.triggerRecovery(newOwner.address);
 
         // Should fail because mock's isRecoverable() returns false
         await expect(recoverable.connect(newOwner).finaliseRecovery())
@@ -303,7 +309,7 @@ describe("Recoverable", function () {
         // Wait for cooldown to pass
         await time.increase(cooldownPeriod + 1);
 
-        await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address))
+        await expect(recoveryCondition.connect(guardian).triggerRecovery(newOwner.address))
           .to.emit(recoveryCondition, "RecoveryTriggered")
           .withArgs(recoverable.target, newOwner.address, guardian.address);
 
@@ -317,7 +323,7 @@ describe("Recoverable", function () {
         // Wait for cooldown to pass
         await time.increase(cooldownPeriod + 1);
 
-        await expect(recoveryCondition.connect(otherAccount).triggerRecovery(recoverable.target, newOwner.address))
+        await expect(recoveryCondition.connect(otherAccount).triggerRecovery(newOwner.address))
           .to.be.revertedWith("Only trusted guardian can call this function");
 
         expect(await recoveryCondition.recoveryTriggered()).to.be.false;
@@ -331,11 +337,11 @@ describe("Recoverable", function () {
         await time.increase(cooldownPeriod + 1);
 
         // First trigger
-        await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+        await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
         expect(await recoveryCondition.recoveryTriggered()).to.be.true;
 
         // Second trigger should revert
-        await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address))
+        await expect(recoveryCondition.connect(guardian).triggerRecovery(newOwner.address))
           .to.be.revertedWith("Recovery already triggered");
       });
 
@@ -346,7 +352,7 @@ describe("Recoverable", function () {
         await time.increase(cooldownPeriod + 1);
 
         // First trigger
-        await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+        await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
         expect(await recoveryCondition.recoveryTriggered()).to.be.true;
 
         // Reset via owner (which calls condition's resetRecovery)
@@ -357,7 +363,7 @@ describe("Recoverable", function () {
         await time.increase(cooldownPeriod + 1);
 
         // Should be able to trigger again
-        await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address))
+        await expect(recoveryCondition.connect(guardian).triggerRecovery(newOwner.address))
           .to.emit(recoveryCondition, "RecoveryTriggered");
       });
     });
@@ -375,6 +381,9 @@ describe("Recoverable", function () {
         const Recoverable = await ethers.getContractFactory("Recoverable");
         const recoverable = await Recoverable.deploy(mockCondition.target, cooldownPeriod);
 
+        // Set the recoverable contract in mock
+        await mockCondition.setRecoverableContract(recoverable.target);
+
         // Wait for cooldown
         await time.increase(cooldownPeriod + 1);
 
@@ -382,7 +391,7 @@ describe("Recoverable", function () {
         expect(await mockCondition.isRecoverable()).to.be.false;
 
         // Anyone can trigger recovery via mock (no guardian restriction)
-        await mockCondition.connect(otherAccount).triggerRecovery(recoverable.target, newOwner.address);
+        await mockCondition.connect(otherAccount).triggerRecovery(newOwner.address);
 
         // Recovery should be started on recoverable
         expect(await recoverable.recoveryStatus()).to.equal(1); // Active
@@ -401,6 +410,9 @@ describe("Recoverable", function () {
         const Recoverable = await ethers.getContractFactory("Recoverable");
         const recoverable = await Recoverable.deploy(mockCondition.target, cooldownPeriod);
 
+        // Set the recoverable contract in mock
+        await mockCondition.setRecoverableContract(recoverable.target);
+
         // Wait for cooldown
         await time.increase(cooldownPeriod + 1);
 
@@ -412,7 +424,7 @@ describe("Recoverable", function () {
         expect(await mockCondition.isRecoverable()).to.be.true;
 
         // Trigger recovery
-        await mockCondition.triggerRecovery(recoverable.target, newOwner.address);
+        await mockCondition.triggerRecovery(newOwner.address);
 
         // isRecoverable should still return true (controlled by setShouldReturn, not by trigger)
         expect(await mockCondition.isRecoverable()).to.be.true;
@@ -427,7 +439,7 @@ describe("Recoverable", function () {
         await time.increase(cooldownPeriod + 1);
 
         // 1. Guardian triggers recovery (which also starts it via condition contract)
-        await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+        await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
 
         // 2. New owner finalises recovery
         await expect(recoverable.connect(newOwner).finaliseRecovery())
@@ -460,12 +472,14 @@ describe("Recoverable", function () {
         // Update recovery condition
         await recoverable.connect(owner).updateRecoveryCondition(mockCondition.target);
 
+        // Set the recoverable contract in mock
+        await mockCondition.setRecoverableContract(recoverable.target);
+
         // Wait for cooldown again
         await time.increase(cooldownPeriod + 1);
 
-        // Mock trigger (which doesn't actually call startRecovery, so we need to call it directly)
-        // Since mock is now the recovery condition, it can call startRecovery
-        await mockCondition.triggerRecovery(recoverable.target, newOwner.address);
+        // Mock trigger - since mock is now the recovery condition, it can call startRecovery
+        await mockCondition.triggerRecovery(newOwner.address);
 
         // Finalise recovery (should work since mock condition returns true)
         await expect(recoverable.connect(newOwner).finaliseRecovery())
@@ -487,7 +501,7 @@ describe("Recoverable", function () {
       await time.increase(cooldownPeriod + 1);
 
       // Guardian triggers recovery (which also starts it)
-      await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+      await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
       await recoverable.connect(newOwner).finaliseRecovery();
 
       const finalChange = await recoverable.lastRecoveryChange();
@@ -520,7 +534,7 @@ describe("Recoverable", function () {
       await time.increase(cooldownPeriod + 1);
 
       // Guardian triggers recovery with zero address
-      await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, ethers.ZeroAddress))
+      await expect(recoveryCondition.connect(guardian).triggerRecovery(ethers.ZeroAddress))
         .to.emit(recoverable, "RecoveryStarted")
         .withArgs(ethers.ZeroAddress);
 
@@ -534,7 +548,7 @@ describe("Recoverable", function () {
       await time.increase(cooldownPeriod + 1);
 
       // Guardian triggers recovery with current owner as new owner
-      await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, owner.address))
+      await expect(recoveryCondition.connect(guardian).triggerRecovery(owner.address))
         .to.emit(recoverable, "RecoveryStarted")
         .withArgs(owner.address);
 
@@ -548,14 +562,14 @@ describe("Recoverable", function () {
       await time.increase(cooldownPeriod + 1);
 
       // First recovery cycle
-      await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+      await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
       await recoverable.connect(newOwner).finaliseRecovery();
 
       // Wait for cooldown to pass before starting second recovery
       await time.increase(cooldownPeriod + 1);
 
       // Second recovery cycle (newOwner is now owner, transferring back to original owner)
-      await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, owner.address);
+      await recoveryCondition.connect(guardian).triggerRecovery(owner.address);
       await recoverable.connect(owner).finaliseRecovery();
 
       expect(await recoverable.owner()).to.equal(owner.address);
@@ -570,7 +584,7 @@ describe("Recoverable", function () {
       // Wait for cooldown to pass
       await time.increase(cooldownPeriod + 1);
 
-      await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address))
+      await expect(recoveryCondition.connect(guardian).triggerRecovery(newOwner.address))
         .to.emit(recoverable, "RecoveryStarted")
         .withArgs(newOwner.address);
     });
@@ -581,7 +595,7 @@ describe("Recoverable", function () {
       // Wait for cooldown to pass
       await time.increase(cooldownPeriod + 1);
 
-      await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+      await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
 
       await expect(recoverable.connect(owner).cancelRecovery())
         .to.emit(recoverable, "RecoveryCancelled");
@@ -594,7 +608,7 @@ describe("Recoverable", function () {
       await time.increase(cooldownPeriod + 1);
 
       // Guardian triggers recovery (which starts it)
-      await recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address);
+      await recoveryCondition.connect(guardian).triggerRecovery(newOwner.address);
 
       await expect(recoverable.connect(newOwner).finaliseRecovery())
         .to.emit(recoverable, "RecoveryFinalised")
@@ -621,7 +635,7 @@ describe("Recoverable", function () {
       // Wait for cooldown to pass
       await time.increase(cooldownPeriod + 1);
 
-      await expect(recoveryCondition.connect(guardian).triggerRecovery(recoverable.target, newOwner.address))
+      await expect(recoveryCondition.connect(guardian).triggerRecovery(newOwner.address))
         .to.emit(recoveryCondition, "RecoveryTriggered")
         .withArgs(recoverable.target, newOwner.address, guardian.address);
     });
@@ -643,6 +657,9 @@ describe("MockRecoveryCondition", function () {
     const Recoverable = await ethers.getContractFactory("Recoverable");
     recoverable = await Recoverable.deploy(mockCondition.target, cooldownPeriod);
 
+    // Set the recoverable contract in mock
+    await mockCondition.setRecoverableContract(recoverable.target);
+
     result = true;
   });
 
@@ -657,7 +674,7 @@ describe("MockRecoveryCondition", function () {
     await time.increase(cooldownPeriod + 1);
 
     // triggerRecovery should not throw an error when calling a valid contract
-    await expect(mockCondition.triggerRecovery(recoverable.target, newOwner.address)).to.not.be.reverted;
+    await expect(mockCondition.triggerRecovery(newOwner.address)).to.not.be.reverted;
   });
 
   it("Should allow setShouldReturn to change behavior", async function () {
