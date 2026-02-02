@@ -6,14 +6,17 @@ module.exports = buildModule("RecoveryModule", (m) => {
   const cooldownPeriod = m.getParameter("cooldownPeriod", DEFAULT_COOLDOWN_PERIOD);
   const guardianAddress = m.getParameter("guardianAddress", "0x0000000000000000000000000000000000000000");
 
-  // Deploy the SimpleRecoveryCondition contract
-  const simpleRecoveryCondition = m.contract("SimpleRecoveryCondition", [guardianAddress]);
+  // Deploy the SimpleCondition contract with zero address for recoverable
+  const simpleCondition = m.contract("SimpleCondition", [guardianAddress, "0x0000000000000000000000000000000000000000"]);
 
   // Deploy the Recoverable contract with the recovery condition
-  const recoverable = m.contract("Recoverable", [simpleRecoveryCondition, cooldownPeriod]);
+  const recoverable = m.contract("Recoverable", [simpleCondition, cooldownPeriod]);
 
-  return { 
-    simpleRecoveryCondition, 
-    recoverable 
+  // Link SimpleCondition to Recoverable
+  m.call(simpleCondition, "setRecoverableContract", [recoverable]);
+
+  return {
+    simpleCondition,
+    recoverable
   };
-}); 
+});

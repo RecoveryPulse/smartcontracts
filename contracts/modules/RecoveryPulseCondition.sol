@@ -109,6 +109,16 @@ contract RecoveryPulseCondition is IRecoveryCondition {
     }
 
     /**
+     * @dev Sets the recoverable contract address (for deployment flexibility)
+     * @param _recoverableContract The recoverable contract address
+     */
+    function setRecoverableContract(address _recoverableContract) external onlyMaintainer {
+        require(_recoverableContract != address(0), "Recoverable contract cannot be zero address");
+        recoverableContract = _recoverableContract;
+        _resetRecovery();
+    }
+
+    /**
      * @dev Checks if recovery is allowed
      * @return bool True if recovery is allowed
      */
