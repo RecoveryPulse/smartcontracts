@@ -209,6 +209,40 @@ MIT License - see [LICENSE](LICENSE) file for details.
 4. Add tests for new functionality
 5. Submit a pull request
 
+## Documentation
+
+- **[Integration Guide](docs/INTEGRATION_GUIDE.md)**: Comprehensive guide for integrating Recovery Pulse into your contracts
+- **[Example Contract](contracts/examples/RecoverableLock.sol)**: Time-locked vault demonstrating recovery integration
+
+## Project Structure
+
+```
+contracts/
+├── Recoverable.sol              # Main contract to inherit
+├── interfaces/
+│   ├── IRecoverable.sol         # Recoverable interface
+│   └── IRecoveryCondition.sol   # Condition interface
+├── modules/
+│   ├── SimpleCondition.sol      # Guardian-triggered recovery
+│   └── RecoveryPulseCondition.sol # Heartbeat-based recovery
+├── examples/
+│   └── RecoverableLock.sol      # Example integration
+└── test/
+    └── MockRecoveryCondition.sol # Testing utility
+
+scripts/
+├── deploy.js                    # Default deployment
+├── deploy-simple.js             # SimpleCondition + Recoverable
+├── deploy-recovery-pulse.js     # RecoveryPulseCondition + Recoverable
+├── deploy-lock-simple.js        # RecoverableLock + SimpleCondition
+└── deploy-lock-pulse.js         # RecoverableLock + RecoveryPulseCondition
+
+test/
+├── Recoverable.js               # Core contract tests
+├── RecoveryPulseCondition.js    # Pulse condition tests
+└── RecoverableLock.js           # Example contract tests
+```
+
 ## Support
 
 For questions or support, please open an issue in the repository.
