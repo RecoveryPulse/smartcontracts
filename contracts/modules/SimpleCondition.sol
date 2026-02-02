@@ -6,25 +6,38 @@ import "../interfaces/IRecoverable.sol";
 
 contract SimpleCondition is IRecoveryCondition {
     address public trustedGuardian;
-    bool public recoveryTriggered;
     address public recoverableContract;
+    bool public recoveryTriggered;
 
-    event RecoveryTriggered(address indexed by, address indexed contractAddress);
+    event RecoveryTriggered(address indexed contractAddress, address indexed newOwner, address indexed guardian);
+    event RecoveryReset(address indexed caller);
+    event GuardianUpdated(address indexed oldGuardian, address indexed newGuardian);
+    event RecoverableContractSet(address indexed recoverableContract);
 
     constructor(address _guardian, address _recoverableContract) {
+        require(_guardian != address(0), "Guardian cannot be zero address");
         trustedGuardian = _guardian;
         recoverableContract = _recoverableContract;
         recoveryTriggered = false;
     }
 
-    function triggerRecovery(address contractAddress, address newOwner) external onlyGuardian {
-        IRecoverable(contractAddress).startRecovery(newOwner);
+    function triggerRecovery(address newOwner) external onlyGuardian {
+        require(!recoveryTriggered, "Recovery already triggered");
+        IRecoverable(recoverableContract).startRecovery(newOwner);
         recoveryTriggered = true;
-        emit RecoveryTriggered(msg.sender, contractAddress);
+        emit RecoveryTriggered(recoverableContract, newOwner, msg.sender);
     }
 
-    function resetRecovery() external onlyGuardian {
+    function resetRecovery() external override onlyRecoverableContract {
         recoveryTriggered = false;
+        emit RecoveryReset(msg.sender);
+    }
+
+    function setRecoverableContract(address _recoverableContract) external onlyGuardian {
+        require(recoverableContract == address(0), "Recoverable contract already set");
+        require(_recoverableContract != address(0), "Recoverable contract cannot be zero address");
+        recoverableContract = _recoverableContract;
+        emit RecoverableContractSet(_recoverableContract);
     }
 
     function isRecoverable() external view override returns (bool) {
@@ -35,8 +48,20 @@ contract SimpleCondition is IRecoveryCondition {
         return !recoveryTriggered;
     }
 
+    function updateGuardian(address _newGuardian) external onlyGuardian {
+        require(_newGuardian != address(0), "Guardian cannot be zero address");
+        address oldGuardian = trustedGuardian;
+        trustedGuardian = _newGuardian;
+        emit GuardianUpdated(oldGuardian, _newGuardian);
+    }
+
     modifier onlyGuardian() {
         require(msg.sender == trustedGuardian, "Only trusted guardian can call this function");
+        _;
+    }
+
+    modifier onlyRecoverableContract() {
+        require(msg.sender == recoverableContract, "Only recoverable contract can call this function");
         _;
     }
 }

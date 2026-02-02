@@ -21,14 +21,16 @@ The main recovery contract that provides:
 Interface for recovery condition contracts:
 ```solidity
 interface IRecoveryCondition {
-    function isRecoverable(address contractAddress) external view returns (bool);
-    function triggerRecovery(address contractAddress) external;
+    function isRecoverable() external view returns (bool);
+    function canTriggerRecovery() external view returns (bool);
+    function triggerRecovery(address newOwner) external;
+    function resetRecovery() external;
 }
 ```
 
 ### Recovery Condition Modules
 
-#### `SimpleRecoveryCondition.sol`
+#### `SimpleCondition.sol`
 A basic recovery condition implementation:
 - **Guardian-based**: Only a trusted guardian can trigger recovery
 - **Simple State**: Boolean flag determines if recovery is allowed
@@ -67,12 +69,15 @@ Testing utility for development:
 
 ## Recovery Flow
 
-1. **Setup**: Deploy with recovery condition and cooldown period
-2. **Trigger**: Guardian triggers recovery in condition contract
-3. **Initiate**: Owner starts recovery with new owner address
-4. **Verify**: System checks recovery conditions are met
-5. **Finalize**: Pending owner completes the transfer
-6. **Complete**: Ownership transferred, status reset
+1. **Setup**: Deploy recovery condition contract with Recoverable address, then Recoverable with condition address and cooldown period
+2. **Trigger & Start**: Guardian calls `triggerRecovery(newOwner)` on condition contract
+   - Condition contract calls `startRecovery(newOwner)` on the stored Recoverable address
+   - Status changes from Inactive to Active, pendingOwner is set
+3. **Cancel (optional)**: Owner can cancel active recovery if still accessible
+4. **Finalize**: Pending owner calls `finaliseRecovery()` to complete transfer
+   - System verifies `isRecoverable()` returns true
+   - Ownership transfers, condition contract resets via `resetRecovery()`
+5. **Complete**: Status returns to Inactive, ready for future recovery if needed
 
 ## Usage
 
@@ -119,39 +124,29 @@ contract MyContract is Recoverable {
 
 ### Recovery Process
 
-#### Simple Recovery (SimpleRecoveryCondition)
-1. **Guardian triggers recovery**:
+#### Simple Recovery (SimpleCondition)
+1. **Guardian triggers recovery** (this also starts recovery on Recoverable):
    ```solidity
-   recoveryCondition.triggerRecovery(contractAddress);
+   simpleCondition.triggerRecovery(newOwnerAddress);
    ```
 
-2. **Owner starts recovery**:
-   ```solidity
-   recoverable.startRecovery(newOwnerAddress);
-   ```
-
-3. **Pending owner finalizes**:
+2. **Pending owner finalizes**:
    ```solidity
    recoverable.finaliseRecovery();
    ```
 
 #### Recovery Pulse (RecoveryPulseCondition)
-1. **Maintainer updates counter** (prevents recovery):
+1. **Maintainer sends heartbeat** (prevents recovery):
    ```solidity
-   recoveryPulseCondition.updateCounter(newCounterValue);
+   recoveryPulseCondition.updatePulse(newPulseValue);
    ```
 
-2. **Guardian triggers recovery** (if timeout exceeded):
+2. **Guardian triggers recovery** (if timeout exceeded, this also starts recovery):
    ```solidity
-   recoveryPulseCondition.triggerRecovery(contractAddress);
+   recoveryPulseCondition.triggerRecovery(newOwnerAddress);
    ```
 
-3. **Owner starts recovery**:
-   ```solidity
-   recoverable.startRecovery(newOwnerAddress);
-   ```
-
-4. **Pending owner finalizes**:
+3. **Pending owner finalizes**:
    ```solidity
    recoverable.finaliseRecovery();
    ```
@@ -191,7 +186,7 @@ npx hardhat run scripts/deploy.js --network <network>
 ## Contract Addresses
 
 After deployment, you'll get:
-- **SimpleRecoveryCondition**: Recovery condition contract
+- **SimpleCondition**: Recovery condition contract (or RecoveryPulseCondition for pulse-based)
 - **Recoverable**: Main recovery contract
 
 ## Security Considerations
@@ -213,6 +208,40 @@ MIT License - see [LICENSE](LICENSE) file for details.
 3. Make your changes
 4. Add tests for new functionality
 5. Submit a pull request
+
+## Documentation
+
+- **[Integration Guide](docs/INTEGRATION_GUIDE.md)**: Comprehensive guide for integrating Recovery Pulse into your contracts
+- **[Example Contract](contracts/examples/RecoverableLock.sol)**: Time-locked vault demonstrating recovery integration
+
+## Project Structure
+
+```
+contracts/
+├── Recoverable.sol              # Main contract to inherit
+├── interfaces/
+│   ├── IRecoverable.sol         # Recoverable interface
+│   └── IRecoveryCondition.sol   # Condition interface
+├── modules/
+│   ├── SimpleCondition.sol      # Guardian-triggered recovery
+│   └── RecoveryPulseCondition.sol # Heartbeat-based recovery
+├── examples/
+│   └── RecoverableLock.sol      # Example integration
+└── test/
+    └── MockRecoveryCondition.sol # Testing utility
+
+scripts/
+├── deploy.js                    # Default deployment
+├── deploy-simple.js             # SimpleCondition + Recoverable
+├── deploy-recovery-pulse.js     # RecoveryPulseCondition + Recoverable
+├── deploy-lock-simple.js        # RecoverableLock + SimpleCondition
+└── deploy-lock-pulse.js         # RecoverableLock + RecoveryPulseCondition
+
+test/
+├── Recoverable.js               # Core contract tests
+├── RecoveryPulseCondition.js    # Pulse condition tests
+└── RecoverableLock.js           # Example contract tests
+```
 
 ## Support
 

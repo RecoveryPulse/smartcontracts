@@ -81,7 +81,7 @@ describe("RecoveryPulseCondition", function () {
 
         // Trigger recovery first
         await time.increase(recoveryTimeout + 1);
-        await recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address);
+        await recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address);
         expect(await recoveryPulseCondition.recoveryTriggered()).to.equal(true);
 
         // Update pulse (should reset recovery)
@@ -114,7 +114,7 @@ describe("RecoveryPulseCondition", function () {
         // Wait for timeout to pass
         await time.increase(recoveryTimeout + 1);
 
-        const tx = await recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address);
+        const tx = await recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address);
         await expect(tx)
           .to.emit(recoveryPulseCondition, "RecoveryTriggered")
           .withArgs(guardian.address, mockRecoverable.target, maintainer.address, await recoveryPulseCondition.getTimeSinceLastUpdate());
@@ -128,7 +128,7 @@ describe("RecoveryPulseCondition", function () {
         // Wait for less than timeout
         await time.increase(recoveryTimeout - 100);
 
-        await expect(recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address))
+        await expect(recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address))
           .to.be.revertedWith("Cannot trigger recovery");
       });
 
@@ -138,7 +138,7 @@ describe("RecoveryPulseCondition", function () {
         // Wait for timeout to pass
         await time.increase(recoveryTimeout + 1);
 
-        await expect(recoveryPulseCondition.connect(otherAccount).triggerRecovery(mockRecoverable.target, maintainer.address))
+        await expect(recoveryPulseCondition.connect(otherAccount).triggerRecovery(maintainer.address))
           .to.be.revertedWith("Only trusted guardian can call this function");
       });
 
@@ -152,14 +152,14 @@ describe("RecoveryPulseCondition", function () {
         await recoveryPulseCondition.connect(maintainer).updatePulse(1);
 
         // Try to trigger recovery (should fail)
-        await expect(recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address))
+        await expect(recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address))
           .to.be.revertedWith("Cannot trigger recovery");
 
         // Wait for timeout again
         await time.increase(recoveryTimeout + 1);
 
         // Now should succeed
-        await expect(recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address))
+        await expect(recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address))
           .to.emit(recoveryPulseCondition, "RecoveryTriggered");
       });
     });
@@ -170,7 +170,7 @@ describe("RecoveryPulseCondition", function () {
 
         // Trigger recovery
         await time.increase(recoveryTimeout + 1);
-        await recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address);
+        await recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address);
         expect(await recoveryPulseCondition.recoveryTriggered()).to.equal(true);
 
         // For testing purposes, we'll test the internal _resetRecovery function indirectly
@@ -207,7 +207,7 @@ describe("RecoveryPulseCondition", function () {
 
         // Trigger recovery first
         await time.increase(recoveryTimeout + 1);
-        await recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address);
+        await recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address);
         expect(await recoveryPulseCondition.recoveryTriggered()).to.equal(true);
 
         // Update timeout (should reset recovery)
@@ -236,7 +236,7 @@ describe("RecoveryPulseCondition", function () {
 
         // Trigger recovery first
         await time.increase(recoveryTimeout + 1);
-        await recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address);
+        await recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address);
         expect(await recoveryPulseCondition.recoveryTriggered()).to.equal(true);
 
         // Update guardian (should reset recovery)
@@ -265,7 +265,7 @@ describe("RecoveryPulseCondition", function () {
 
         // Trigger recovery first
         await time.increase(recoveryTimeout + 1);
-        await recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address);
+        await recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address);
         expect(await recoveryPulseCondition.recoveryTriggered()).to.equal(true);
 
         // Update maintainer (should reset recovery)
@@ -296,7 +296,7 @@ describe("RecoveryPulseCondition", function () {
 
         // Trigger recovery
         await time.increase(recoveryTimeout + 1);
-        await recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address);
+        await recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address);
 
         expect(await recoveryPulseCondition.canTriggerRecovery()).to.equal(false);
       });
@@ -327,7 +327,7 @@ describe("RecoveryPulseCondition", function () {
 
         // Trigger recovery
         await time.increase(recoveryTimeout + 1);
-        await recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address);
+        await recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address);
 
         // Should return true when recovery is triggered
         expect(await recoveryPulseCondition.isRecoverable()).to.equal(true);
@@ -338,7 +338,7 @@ describe("RecoveryPulseCondition", function () {
 
         // Trigger recovery
         await time.increase(recoveryTimeout + 1);
-        await recoveryPulseCondition.connect(guardian).triggerRecovery(mockRecoverable.target, maintainer.address);
+        await recoveryPulseCondition.connect(guardian).triggerRecovery(maintainer.address);
 
         // Wait for timeout to pass again
         await time.increase(recoveryTimeout + 1);

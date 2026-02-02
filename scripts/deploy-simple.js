@@ -1,26 +1,19 @@
 const hre = require("hardhat");
 
 /**
- * Main deploy script - Deploys SimpleCondition + Recoverable
- * This is an alias for deploy-simple.js
+ * Deploys SimpleCondition + Recoverable
  *
  * Environment variables:
  * - COOLDOWN_PERIOD: Cooldown period in seconds (default: 86400 = 1 day)
  * - GUARDIAN_ADDRESS: Guardian address for recovery (default: deployer)
  *
  * Usage:
- *   npx hardhat run scripts/deploy.js --network <network>
- *
- * For other deployment options, see:
- *   - deploy-simple.js: SimpleCondition + Recoverable
- *   - deploy-recovery-pulse.js: RecoveryPulseCondition + Recoverable
- *   - deploy-lock-simple.js: RecoverableLock with SimpleCondition
- *   - deploy-lock-pulse.js: RecoverableLock with RecoveryPulseCondition
+ *   npx hardhat run scripts/deploy-simple.js --network <network>
  */
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
 
-  console.log("Deploying Recovery System (SimpleCondition)...");
+  console.log("Deploying Simple Recovery System...");
   console.log("Deployer:", deployer.address);
 
   // Get deployment parameters from environment or use defaults
@@ -31,7 +24,7 @@ async function main() {
   console.log("- Cooldown Period:", cooldownPeriod, "seconds");
   console.log("- Guardian Address:", guardianAddress);
 
-  // Step 1: Deploy SimpleCondition with zero address for recoverable
+  // Step 1: Deploy SimpleCondition with zero address for recoverable (will link later)
   console.log("\n=== Step 1: Deploying SimpleCondition ===");
   const SimpleCondition = await hre.ethers.getContractFactory("SimpleCondition");
   const simpleCondition = await SimpleCondition.deploy(guardianAddress, hre.ethers.ZeroAddress);
